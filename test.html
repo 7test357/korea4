@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도트 아트 생성기</title>
+    <style>
+        #canvas {
+            border: 1px solid #000;
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body>
+    <h1>도트 아트 생성기</h1>
+    <input type="file" id="imageLoader" accept="image/*" />
+    <br>
+    <label for="precision">정밀도 (0-255): </label>
+    <input type="range" id="precision" min="0" max="255" value="127" />
+    <br>
+    <label for="size">가로 크기 (0-100): </label>
+    <input type="range" id="size" min="0" max="100" value="50" />
+    <br>
+    <button id="invert">배경 반전</button>
+    <br>
+    <canvas id="canvas" width="500" height="500"></canvas>
+
+    <script>
+        const imageLoader = document.getElementById('imageLoader');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const precisionInput = document.getElementById('precision');
+        const sizeInput = document.getElementById('size');
+        const invertButton = document.getElementById('invert');
+
+        let image = new Image();
+
+        imageLoader.addEventListener('change', (event) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                image.src = e.target.result;
+                image.onload = draw;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        });
+
+        precisionInput.addEventListener('input', draw);
+        sizeInput.addEventListener('input', draw);
+        invertButton.addEventListener('click', invertBackground);
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const precision = precisionInput.value;
+            const size = sizeInput.value;
+
+            // 도트 아트 효과 적용
+            ctx.globalAlpha = 1;
+            ctx.drawImage(image, 0, 0, canvas.width / size, canvas.height / size);
+            ctx.drawImage(canvas, 0, 0, canvas.width / size, canvas.height / size, 0, 0, canvas.width, canvas.height);
+        }
+
+        function invertBackground() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = 255 - data[i];     // Red
+                data[i + 1] = 255 - data[i + 1]; // Green
+                data[i + 2] = 255 - data[i + 2]; // Blue
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+    </script>
+</body>
+</html>
